@@ -21,7 +21,8 @@ const analyzeSentiment = (text) => {
     };
   }
 
-  const tokens = natural.WordTokenizer().tokenize(text.toLowerCase());
+  const tokenizer = new natural.WordTokenizer();
+  const tokens = tokenizer.tokenize(text.toLowerCase());
   const sentimentScore = analyzer.getSentiment(tokens);
 
   let sentiment = 'neutral';

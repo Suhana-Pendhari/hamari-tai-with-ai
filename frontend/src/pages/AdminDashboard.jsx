@@ -1,15 +1,18 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FiShield, FiCheckCircle, FiXCircle, FiUsers, FiUserCheck, FiRefreshCw, FiEye } from 'react-icons/fi';
+import { FiShield, FiCheckCircle, FiXCircle, FiUsers, FiUserCheck, FiRefreshCw, FiEye, FiStar, FiTrendingUp } from 'react-icons/fi';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [pendingMaids, setPendingMaids] = useState([]);
   const [allMaids, setAllMaids] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAllMaids, setShowAllMaids] = useState(false);
+  const [showAllUsers, setShowAllUsers] = useState(false);
   const [maidFilter, setMaidFilter] = useState('all');
+  const [userFilter, setUserFilter] = useState('all');
 
   useEffect(() => {
     fetchDashboardData();
@@ -20,6 +23,12 @@ const AdminDashboard = () => {
       fetchAllMaids();
     }
   }, [showAllMaids, maidFilter]);
+
+  useEffect(() => {
+    if (showAllUsers) {
+      fetchAllUsers();
+    }
+  }, [showAllUsers, userFilter]);
 
   const fetchDashboardData = async () => {
     try {
@@ -43,6 +52,16 @@ const AdminDashboard = () => {
       setAllMaids(response.data.maids || []);
     } catch (error) {
       console.error('Fetch all maids error:', error);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      const params = userFilter !== 'all' ? { role: userFilter } : {};
+      const response = await axios.get('/api/admin/users', { params });
+      setAllUsers(response.data.users || []);
+    } catch (error) {
+      console.error('Fetch all users error:', error);
     }
   };
 
@@ -113,6 +132,77 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Users Section */}
+        <div className="bg-white rounded-2xl shadow-md p-8 mb-8 border border-gray-100">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-4">
+            <h2 className="text-2xl font-semibold text-gray-900">Users Management</h2>
+            <div className="flex gap-3">
+              <select
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+                className="px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="all">All Users</option>
+                <option value="user">Regular Users</option>
+                <option value="maid">Maid Users</option>
+                <option value="admin">Admins</option>
+              </select>
+              <button
+                onClick={() => {
+                  setShowAllUsers(!showAllUsers);
+                  if (!showAllUsers) {
+                    fetchAllUsers();
+                  }
+                }}
+                className="flex items-center px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                <FiUsers className="mr-2" />
+                {showAllUsers ? 'Hide Users' : 'View All Users'}
+              </button>
+            </div>
+          </div>
+          
+          {showAllUsers && (
+            <div className="mt-6">
+              {allUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <FiUsers className="text-6xl text-gray-400 mx-auto mb-4" />
+                  <p className="text-xl text-gray-600">No users found</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {allUsers.map(user => (
+                    <div key={user._id} className="bg-gray-50 border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all">
+                      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-semibold text-gray-900">{user.name}</h3>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                              user.role === 'maid' ? 'bg-orange-100 text-orange-800' :
+                              'bg-blue-100 text-blue-800'
+                            }`}>
+                              {user.role.toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-700 space-y-1">
+                            <p><strong>Email:</strong> {user.email}</p>
+                            <p><strong>Phone:</strong> {user.phone || 'N/A'}</p>
+                            {user.location?.address && (
+                              <p><strong>Location:</strong> {user.location.address}</p>
+                            )}
+                            <p className="text-xs">Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Pending Verifications */}
         <div className="bg-white rounded-2xl shadow-md p-8 mb-8 border border-gray-100">
@@ -243,7 +333,28 @@ const AdminDashboard = () => {
                         <div className="text-sm text-gray-700 space-y-1">
                           <p><strong>Email:</strong> {maid.user?.email || 'N/A'}</p>
                           <p><strong>Phone:</strong> {maid.user?.phone || 'N/A'}</p>
-                          <p className="text-xs">Created: {new Date(maid.createdAt).toLocaleDateString()}</p>
+                          <div className="flex items-center gap-4 mt-2">
+                            {maid.rating && (
+                              <div className="flex items-center gap-1">
+                                <FiStar className="text-yellow-500" />
+                                <span><strong>Rating:</strong> {maid.rating.average?.toFixed(1) || '0.0'} ({maid.rating.count || 0} reviews)</span>
+                              </div>
+                            )}
+                            {maid.trustScore && (
+                              <div className="flex items-center gap-1">
+                                <FiTrendingUp className="text-green-500" />
+                                <span><strong>Trust Score:</strong> {maid.trustScore.score || 0}/100 ({maid.trustScore.status || 'N/A'})</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 mt-2">
+                            <span><strong>Experience:</strong> {maid.experience || 0} years</span>
+                            <span><strong>Salary:</strong> ₹{maid.salaryExpectation || 'N/A'}/month</span>
+                            <span className={`px-2 py-1 rounded text-xs ${maid.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                              {maid.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <p className="text-xs mt-2">Created: {new Date(maid.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       {maid.verificationStatus === 'pending' && (

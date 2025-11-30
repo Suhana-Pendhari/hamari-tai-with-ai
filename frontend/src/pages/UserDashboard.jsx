@@ -9,7 +9,7 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [showReviewForm, setShowReviewForm] = useState(null);
-  const [reviewData, setReviewData] = useState({ rating: 0, comment: '' });
+  const [reviewData, setReviewData] = useState({});
 
   useEffect(() => {
     fetchBookings();
@@ -44,8 +44,15 @@ const UserDashboard = () => {
   };
 
   const handleReviewSubmit = async (bookingId, maidId) => {
-    if (reviewData.rating === 0) {
+    const currentReviewData = reviewData[bookingId] || { rating: 0, comment: '' };
+    
+    if (!currentReviewData.rating || currentReviewData.rating === 0) {
       alert('Please select a rating');
+      return;
+    }
+
+    if (!maidId) {
+      alert('Maid information is missing. Please refresh the page and try again.');
       return;
     }
 
@@ -53,15 +60,23 @@ const UserDashboard = () => {
       await axios.post('/api/reviews', {
         maid: maidId,
         booking: bookingId,
-        rating: reviewData.rating,
-        comment: reviewData.comment
+        rating: currentReviewData.rating,
+        comment: currentReviewData.comment || ''
       });
       alert('Review submitted successfully!');
       setShowReviewForm(null);
-      setReviewData({ rating: 0, comment: '' });
+      setReviewData(prev => {
+        const newData = { ...prev };
+        delete newData[bookingId];
+        return newData;
+      });
       fetchBookings(); // Refresh bookings
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to submit review');
+      console.error('Review submission error:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.errors?.[0]?.msg || 
+                          'Failed to submit review';
+      alert(errorMessage);
     }
   };
 
@@ -160,7 +175,10 @@ const UserDashboard = () => {
                       <button
                         onClick={() => {
                           setShowReviewForm(booking._id);
-                          setReviewData({ rating: 0, comment: '' });
+                          setReviewData(prev => ({
+                            ...prev,
+                            [booking._id]: { rating: 0, comment: '' }
+                          }));
                         }}
                         className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-sm font-medium flex items-center transition-all"
                       >
@@ -175,29 +193,38 @@ const UserDashboard = () => {
                       <div className="mb-3">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
                         <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => setReviewData({ ...reviewData, rating: star })}
-                              className="focus:outline-none"
-                            >
-                              <FiStar
-                                className={`w-6 h-6 ${
-                                  star <= reviewData.rating
-                                    ? 'text-yellow-500 fill-current'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            </button>
-                          ))}
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const currentReviewData = reviewData[booking._id] || { rating: 0, comment: '' };
+                            return (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setReviewData(prev => ({
+                                  ...prev,
+                                  [booking._id]: { ...(prev[booking._id] || { comment: '' }), rating: star }
+                                }))}
+                                className="focus:outline-none"
+                              >
+                                <FiStar
+                                  className={`w-6 h-6 ${
+                                    star <= currentReviewData.rating
+                                      ? 'text-yellow-500 fill-current'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                       <div className="mb-3">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Comment (optional)</label>
                         <textarea
-                          value={reviewData.comment}
-                          onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                          value={reviewData[booking._id]?.comment || ''}
+                          onChange={(e) => setReviewData(prev => ({
+                            ...prev,
+                            [booking._id]: { ...(prev[booking._id] || { rating: 0 }), comment: e.target.value }
+                          }))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                           rows="3"
                           placeholder="Share your experience..."
@@ -205,7 +232,11 @@ const UserDashboard = () => {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleReviewSubmit(booking._id, booking.maid?._id)}
+                          onClick={() => {
+                            // Extract maid ID - handle both object and string cases
+                            const maidId = booking.maid?._id || booking.maid || null;
+                            handleReviewSubmit(booking._id, maidId);
+                          }}
                           className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-medium"
                         >
                           Submit Review
@@ -213,7 +244,11 @@ const UserDashboard = () => {
                         <button
                           onClick={() => {
                             setShowReviewForm(null);
-                            setReviewData({ rating: 0, comment: '' });
+                            setReviewData(prev => {
+                              const newData = { ...prev };
+                              delete newData[booking._id];
+                              return newData;
+                            });
                           }}
                           className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-sm font-medium"
                         >

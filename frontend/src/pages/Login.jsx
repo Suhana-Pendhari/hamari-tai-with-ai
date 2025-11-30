@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
+import Toast from '../components/Toast';
 import { FiMail, FiLock, FiLogIn, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = () => {
@@ -13,6 +14,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -31,8 +33,11 @@ const Login = () => {
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
-      // Redirect all users to home page after login
-      navigate('/');
+      setShowSuccess(true);
+      setTimeout(() => {
+        // Redirect all users to home page after login
+        navigate('/');
+      }, 1500);
     } else {
       setError(result.message);
     }
@@ -42,6 +47,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-cream-100 to-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      {showSuccess && <Toast message="Login successful!" onClose={() => setShowSuccess(false)} />}
       <div className="max-w-md mx-auto flex flex-col items-center">
         {/* Header */}
         <div className="text-center mb-8 w-full">

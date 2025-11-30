@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import Toast from '../components/Toast';
 
 const MaidRegister = () => {
   const { user } = useAuth();
@@ -35,6 +36,7 @@ const MaidRegister = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(isEditMode);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (isEditMode) {
@@ -199,7 +201,10 @@ const MaidRegister = () => {
             'Content-Type': 'multipart/form-data'
           }
         });
-        alert('Profile updated successfully!');
+        setShowSuccess(true);
+        setTimeout(() => {
+          navigate('/maid-dashboard');
+        }, 1500);
       } else {
         // Create new profile
         const response = await axios.post('/api/maids/register', formDataToSend, {
@@ -207,9 +212,11 @@ const MaidRegister = () => {
             'Content-Type': 'multipart/form-data'
           }
         });
-        alert('Maid profile created successfully!');
+        setShowSuccess(true);
+        setTimeout(() => {
+          navigate('/maid-dashboard');
+        }, 1500);
       }
-      navigate('/maid-dashboard');
     } catch (error) {
       console.error('Registration error:', error);
       const errorMessage = error.response?.data?.message || 
@@ -234,6 +241,12 @@ const MaidRegister = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-cream-100 to-gray-50 py-12">
+      {showSuccess && (
+        <Toast 
+          message={isEditMode ? "Profile updated successfully!" : "Maid profile created successfully!"} 
+          onClose={() => setShowSuccess(false)} 
+        />
+      )}
       <div className="max-w-2xl mx-auto px-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
           {isEditMode ? 'Edit Maid Profile' : 'Create Maid Profile'}

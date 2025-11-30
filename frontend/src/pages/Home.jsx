@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiSearch, FiShield, FiStar, FiMapPin, FiCheckCircle, FiUser } from 'react-icons/fi';
+import { FiSearch, FiShield, FiStar, FiMapPin, FiCheckCircle, FiUser, FiLayout } from 'react-icons/fi';
 import Logo from '../components/Logo';
 
 const Home = () => {
-  const { isAuthenticated, isMaid } = useAuth();
+  const { isAuthenticated, isMaid, isAdmin } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-cream-50 to-white">
@@ -51,24 +51,30 @@ const Home = () => {
                   Login
                 </Link>
               </div>
+            ) : isAdmin ? (
+              <Link
+                to="/admin-dashboard"
+                className="bg-white hover:bg-gray-100 text-gray-900 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 inline-flex items-center"
+              >
+                <FiLayout className="mr-2 text-xl" />
+                Go to Dashboard
+              </Link>
+            ) : isMaid ? (
+              <Link
+                to="/maid-dashboard"
+                className="bg-white hover:bg-gray-100 text-gray-900 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 inline-flex items-center"
+              >
+                <FiUser className="mr-2 text-xl" />
+                Go to Dashboard
+              </Link>
             ) : (
-              isMaid ? (
-                <Link
-                  to="/maid-dashboard"
-                  className="bg-white hover:bg-gray-100 text-gray-900 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 inline-flex items-center"
-                >
-                  <FiUser className="mr-2 text-xl" />
-                  Go to Dashboard
-                </Link>
-              ) : (
-                <Link
-                  to="/search"
-                  className="bg-white hover:bg-gray-100 text-gray-900 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 inline-flex items-center"
-                >
-                  <FiSearch className="mr-2 text-xl" />
-                  Find a Maid
-                </Link>
-              )
+              <Link
+                to="/search"
+                className="bg-white hover:bg-gray-100 text-gray-900 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 inline-flex items-center"
+              >
+                <FiSearch className="mr-2 text-xl" />
+                Find a Maid
+              </Link>
             )}
           </div>
         </div>

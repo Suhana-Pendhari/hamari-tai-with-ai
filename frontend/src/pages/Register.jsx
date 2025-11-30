@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
+import Toast from '../components/Toast';
 import { FiUser, FiMail, FiPhone, FiLock, FiMapPin, FiUserPlus, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Register = () => {
@@ -21,6 +22,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -69,8 +71,11 @@ const Register = () => {
     const result = await register(formData);
     
     if (result.success) {
-      // Redirect all users to home page after registration
-      navigate('/');
+      setShowSuccess(true);
+      setTimeout(() => {
+        // Redirect all users to home page after registration
+        navigate('/');
+      }, 1500);
     } else {
       setError(result.message);
     }
@@ -80,6 +85,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-100 via-cream-100 to-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      {showSuccess && <Toast message="Account created successfully!" onClose={() => setShowSuccess(false)} />}
       <div className="max-w-2xl mx-auto flex flex-col items-center">
         {/* Header */}
         <div className="text-center mb-8 w-full">
